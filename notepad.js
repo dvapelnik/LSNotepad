@@ -57,6 +57,8 @@ function Notepad(options) {
     this.buttonId = options.button;
     this.button = jQuery(options.button || '#add-new-note');
 
+    this.eraseButton = jQuery(options.erase || '#erase');
+
     this.formId = options.form || '#form';
 
     this.title = options.title || '#title';
@@ -89,6 +91,10 @@ function Notepad(options) {
         }
     }; //finished
 
+    this.forErase = function(event){
+        new Notepad().erase();
+    }
+
     this.forRemoveNote = function (event) {
         var notepad = new Notepad(),
             noteKey = notepad.prefix + jQuery(this).attr('data-key-id');
@@ -107,9 +113,12 @@ function Notepad(options) {
 }
 
 Notepad.prototype.init = function () {
+    this.eraseButton.on('click', this.forErase);
     this.button.on('click' + '.' + this.addEventName, this.forAddNote);
     this.container.on('click', 'a.edit', this.forEditNote);
     this.container.on('click', 'a.remove', this.forRemoveNote);
+
+    this.reloadAllNotesFromStorage();
 }
 
 Notepad.prototype.addNote = function (title, description, date) {
