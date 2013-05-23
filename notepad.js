@@ -4,7 +4,7 @@ function LocalStorageHelper() {
 }
 
 LocalStorageHelper.prototype.addItemByKey = function (value, key) {
-    if (this.checkStorage() && !this.hasItemByKey(key)) {
+    if (this.checkStorage()) {
         localStorage.setItem(key, value);
     }
 }
@@ -60,10 +60,13 @@ function Notepad(options) {
     this.eraseButton = jQuery(options.erase || '#erase');
 
     this.formId = options.form || '#form';
+    this.form = jQuery(this.formId);
 
-    this.title = options.title || '#title';
+    this.titleId = options.title || '#title';
+    this.title = jQuery(this.titleId);
 
-    this.description = options.description || '#description';
+    this.descriptionId = options.description || '#description';
+    this.description = jQuery(this.descriptionId);
 
     this.ids = [];
     this.keys = [];
@@ -83,15 +86,15 @@ function Notepad(options) {
     this.forAddNote = function (event) {
         var notepad = new Notepad(),
             form = jQuery(notepad.formId),
-            title = form.find(notepad.title).val(),
+            title = form.find(notepad.titleId).val(),
             description = form.find(notepad.description).val();
         if (title.length !== 0 && description.length !== 0) {
             notepad.addNote(title, description);
-            form.find([notepad.title, notepad.description].join(', ')).val('');
+            form.find([notepad.titleId, notepad.descriptionId].join(', ')).val('');
         }
     }; //finished
 
-    this.forErase = function(event){
+    this.forErase = function (event) {
         new Notepad().erase();
     }
 
@@ -103,10 +106,30 @@ function Notepad(options) {
     }; // finished
 
     this.forEditNote = function (event) {
-        var notepad = new Notepad(),
+        var note,
+            notepad = new Notepad(),
             noteKey = notepad.prefix + jQuery(this).attr('data-key-id'),
             addLabel = notepad.button.text();
+        notepad.button.off('click' + '.' + notepad.addEventName).text(notepad.saveLabel);
+        note = JSON.parse(notepad.lsHelper.getItemByKey(noteKey));
+        notepad.title.val(note.title);
+        notepad.description.val(note.description);
 
+        notepad.button.on('click' + '.' + notepad.editEventName, function (event) {
+            notepad.lsHelper.addItemByKey(
+                new Note(
+                    notepad.title.val(),
+                    notepad.description.val()
+                ).getJSON(),
+                noteKey
+            );
+            notepad.form.find([notepad.titleId, notepad.descriptionId].join(', ')).val('');
+            notepad.reloadAllNotesFromStorage();
+            notepad.button
+                .off('click' + '.' + notepad.editEventName)
+                .on('click' + '.' + notepad.addEventName, notepad.forAddNote)
+                .text(notepad.addLabel);
+        });
     };
 
     this.init();
